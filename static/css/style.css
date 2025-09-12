@@ -1,0 +1,103 @@
+body {
+    margin: 0;
+    padding: 0;
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    color: #c9d1d9;
+    background-color: #0d1117;
+    overflow-x: hidden;
+}
+
+#matrix-bg {
+    position: fixed;
+    top: 0;
+    left: 0;
+    z-index: 0;
+}
+
+.container {
+    position: relative;
+    z-index: 1;
+    max-width: 900px;
+    margin: 50px auto;
+    padding: 20px;
+    background-color: #161b22cc;
+    /* semi-transparent to see matrix */
+    border-radius: 10px;
+    box-shadow: 0 0 20px rgba(0, 255, 0, 0.3);
+}
+
+h1,
+h2,
+h3 {
+    color: #39ff14;
+}
+
+form {
+    margin-bottom: 30px;
+}
+
+input[type="file"] {
+    padding: 10px;
+    border-radius: 5px;
+    border: none;
+    background-color: #0d1117;
+    color: #c9d1d9;
+}
+
+button {
+    background: #238636;
+    color: white;
+    padding: 10px 25px;
+    border: none;
+    cursor: pointer;
+    font-size: 16px;
+    border-radius: 5px;
+    margin-left: 10px;
+    transition: all 0.3s ease;
+}
+
+button:hover {
+    background: #2ea043;
+    box-shadow: 0 0 10px #2ea043;
+}
+
+.card {
+    background-color: #0d1117cc;
+    padding: 20px;
+    margin: 20px 0;
+    border-radius: 10px;
+    box-shadow: 0 0 15px rgba(0, 255, 0, 0.5);
+}
+
+table {
+    width: 100%;
+    border-collapse: collapse;
+    margin-top: 20px;
+    color: #c9d1d9;
+}
+
+table th,
+table td {
+    padding: 12px;
+    border: 1px solid #39ff14;
+}
+
+table th {
+    background-color: #0d1117;
+}
+
+table tr:nth-child(even) {
+    background-color: #161b22;
+}
+
+.high-suspicion {
+    color: red;
+    font-weight: bold;
+}
+
+canvas {
+    background-color: #0d1117;
+    border: 1px solid #39ff14;
+    border-radius: 10px;
+    margin-top: 20px;
+}

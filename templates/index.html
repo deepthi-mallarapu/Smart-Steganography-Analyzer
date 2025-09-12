@@ -1,0 +1,268 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <title>Smart Steganography Analyzer</title>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <style>
+        body {
+            margin: 0;
+            font-family: Arial, sans-serif;
+            background: #f0fff0;
+        }
+
+        #matrix-bg {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100vw;
+            height: 100vh;
+            z-index: -1;
+        }
+
+        .container {
+            max-width: 900px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+
+        h1 {
+            color: #cc0000;
+            /* Dark red main title */
+        }
+
+        h2,
+        h3 {
+            color: #003300;
+            /* Subtitles green */
+        }
+
+        .card {
+            background: rgba(255, 255, 255, 0.9);
+            border-radius: 10px;
+            padding: 15px;
+            margin-top: 20px;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+        }
+
+        .card p,
+        .card span {
+            color: #003300;
+        }
+
+        .uploaded-file {
+            color: #cc0000;
+            /* Dark red for filename */
+            font-weight: bold;
+            margin-left: 10px;
+            /* spacing from input */
+        }
+
+        input[type=file],
+        button {
+            padding: 10px;
+            margin: 5px 0;
+        }
+
+        img {
+            max-width: 300px;
+            display: block;
+            margin-top: 10px;
+        }
+
+        .high-suspicion {
+            color: red;
+            font-weight: bold;
+        }
+
+        /* History Section */
+        #historySection {
+            display: none;
+            margin-top: 30px;
+        }
+
+        #historyTable {
+            width: 100%;
+            border-collapse: collapse;
+        }
+
+        #historyTable th,
+        #historyTable td {
+            border: 1px solid #003300;
+            padding: 8px;
+            text-align: center;
+        }
+
+        #historyTable th {
+            background-color: #cce5cc;
+            color: #003300;
+        }
+
+        #historyTable tr:hover {
+            background-color: #e0ffe0;
+            cursor: pointer;
+        }
+
+        .download-btn {
+            display: block;
+            width: 200px;
+            margin: 10px auto;
+            padding: 10px;
+            background: #003300;
+            color: #fff;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+        }
+    </style>
+</head>
+
+<body>
+    <canvas id="matrix-bg"></canvas>
+
+    <div class="container">
+        <h1>🔐 Smart Steganography Analyzer</h1>
+
+        <!-- Form with filename display -->
+        <form method="POST" enctype="multipart/form-data">
+            <input type="file" name="image" id="imageInput" required>
+            <span id="fileName" class="uploaded-file"></span>
+            <button type="submit">Analyze</button>
+        </form>
+
+        <button id="viewHistoryBtn">📜 View History</button>
+
+        {% if filename %}
+        <div class="card">
+            <h3>Uploaded Image</h3>
+            <p>Filename: <span class="uploaded-file">{{ filename }}</span></p>
+            <img src="{{ url_for('static', filename='uploads/' + filename) }}" alt="Uploaded Image">
+        </div>
+        {% endif %}
+
+        {% if results %}
+        <div class="card">
+            <h2>🧪 Analysis Results</h2>
+            <p><b>Chi-Square Score:</b> {{ results.chi_score }}</p>
+            <p><b>Suspicion Level:</b> <span
+                    class="{{ 'high-suspicion' if results.suspicion_level=='High' else '' }}">{{ results.suspicion_level
+                    }}</span></p>
+
+            <h3>Pixel Value Distribution</h3>
+            <canvas id="histChart" width="800" height="300"></canvas>
+            <script>
+                const pixelHist = {{ results.hist_data| safe }};
+                const labels = Array.from({ length: 256 }, (_, i) => i);
+                const ctx = document.getElementById('histChart').getContext('2d');
+                new Chart(ctx, {
+                    type: 'bar',
+                    data: {
+                        labels: labels,
+                        datasets: [{
+                            label: 'Pixel Histogram',
+                            data: pixelHist,
+                            backgroundColor: 'rgba(0,100,0,0.8)',
+                            borderColor: 'rgba(0,100,0,1)',
+                            borderWidth: 1
+                        }]
+                    },
+                    options: {
+                        responsive: true,
+                        plugins: { legend: { display: false } },
+                        scales: {
+                            x: { title: { display: true, text: 'Pixel Value', color: '#003300' }, ticks: { color: '#003300' } },
+                            y: { title: { display: true, text: 'Frequency', color: '#003300' }, ticks: { color: '#003300' } }
+                        }
+                    }
+                });
+            </script>
+        </div>
+        {% endif %}
+
+        <!-- History Section -->
+        <div id="historySection" class="card">
+            <h2>📜 Upload History</h2>
+            <table id="historyTable">
+                <tr>
+                    <th>Timestamp</th>
+                    <th>Filename</th>
+                    <th>Chi-Square</th>
+                    <th>Suspicion Level</th>
+                </tr>
+                {% for record in records %}
+                <tr onclick="window.open('{{ url_for('static', filename='uploads/' + record['Filename']) }}','_blank')">
+                    <td>{{ record['Timestamp'] }}</td>
+                    <td>{{ record['Filename'] }}</td>
+                    <td>{{ record['Chi-Square'] }}</td>
+                    <td>{{ record['Suspicion Level'] }}</td>
+                </tr>
+                {% endfor %}
+            </table>
+            <a href="{{ url_for('download_history') }}">
+                <button class="download-btn">⬇️ Download PDF</button>
+            </a>
+        </div>
+
+    </div>
+
+    <!-- MATRIX SCRIPT + History toggle + Filename JS -->
+    <script>
+        document.addEventListener("DOMContentLoaded", function () {
+            // Matrix background
+            const canvas = document.getElementById("matrix-bg");
+            const ctx = canvas.getContext("2d");
+            function resizeCanvas() { canvas.width = window.innerWidth; canvas.height = window.innerHeight; }
+            resizeCanvas();
+            const letters = "ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789".split("");
+            const fontSize = 16;
+            const columns = Math.floor(canvas.width / fontSize);
+            const drops = Array(columns).fill(0);
+            const maxSteps = Math.floor(canvas.height / fontSize);
+            let step = 0;
+            function drawMatrixFallOnce() {
+                ctx.fillStyle = "rgba(0,0,0,0.05)";
+                ctx.fillRect(0, 0, canvas.width, canvas.height);
+                ctx.fillStyle = "rgba(50,150,50,0.8)";
+                ctx.font = fontSize + "px monospace";
+                for (let i = 0; i < columns; i++) {
+                    const text = letters[Math.floor(Math.random() * letters.length)];
+                    ctx.fillText(text, i * fontSize, drops[i] * fontSize);
+                    if (step < maxSteps) drops[i] += 1;
+                }
+                step++;
+                if (step <= maxSteps) requestAnimationFrame(drawMatrixFallOnce);
+            }
+            drawMatrixFallOnce();
+            window.addEventListener("resize", () => {
+                resizeCanvas(); drops.fill(0); step = 0; drawMatrixFallOnce();
+            });
+
+            // History toggle
+            const viewBtn = document.getElementById('viewHistoryBtn');
+            const historySection = document.getElementById('historySection');
+            historySection.style.display = "none";
+            viewBtn.onclick = () => {
+                if (historySection.style.display === "none") {
+                    historySection.style.display = "block";
+                    historySection.scrollIntoView({ behavior: "smooth" });
+                } else {
+                    historySection.style.display = "none";
+                }
+            }
+
+            // Display chosen filename next to file input
+            const imageInput = document.getElementById('imageInput');
+            const fileNameSpan = document.getElementById('fileName');
+            imageInput.addEventListener('change', () => {
+                const file = imageInput.files[0];
+                if (file) {
+                    fileNameSpan.textContent = file.name;
+                } else {
+                    fileNameSpan.textContent = '';
+                }
+            });
+        });
+    </script>
+</body>
+
+</html>
