@@ -31,6 +31,3 @@ Provide images to analyze and review the detection results.
 
 Contribution:
 Contributions are welcome. You can fork the repository, make improvements, and submit a pull request.
-
-License:
-Include your preferred license here (for example MIT, Apache 2.0, etc.).
